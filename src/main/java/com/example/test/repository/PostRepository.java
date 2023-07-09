@@ -1,6 +1,6 @@
-package com.example.test.user.repository;
+package com.example.test.repository;
 
-import com.example.test.user.model.entity.Posts;
+import com.example.test.model.entity.Posts;
 import org.springframework.data.mongodb.repository.ReactiveMongoRepository;
 import org.springframework.stereotype.Repository;
 import reactor.core.publisher.Mono;
@@ -9,6 +9,6 @@ import reactor.core.publisher.Mono;
 public interface PostRepository extends ReactiveMongoRepository<Posts, String> {
     Mono<Posts> findByPostId(String postId);
 
-    boolean existsByUserIdAndPostId(String userId, String postId);
+    Mono<Boolean> existsByUserIdAndPostId(String userId, String postId);
 }
 

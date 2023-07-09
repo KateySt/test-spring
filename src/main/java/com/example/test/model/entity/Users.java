@@ -1,4 +1,4 @@
-package com.example.test.user.model.entity;
+package com.example.test.model.entity;
 
 import lombok.*;
 import org.springframework.data.annotation.Id;
@@ -9,7 +9,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@Document(collation = "users")
+@Document
 public class Users {
     @Id
     private String userId;
