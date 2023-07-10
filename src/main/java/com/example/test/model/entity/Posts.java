@@ -20,7 +20,7 @@ public class Posts {
     private String title;
     private String body;
     @Field("dateCreated")
-    @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm")
+    @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private Instant dateCreated;
     private String userId;
 }

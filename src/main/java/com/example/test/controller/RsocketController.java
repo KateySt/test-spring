@@ -1,9 +1,7 @@
 package com.example.test.controller;
 
-import com.example.test.model.dto.NewPost;
-import com.example.test.model.dto.NewUser;
-import com.example.test.model.entity.Posts;
-import com.example.test.model.entity.Users;
+import com.example.test.model.dto.*;
+import com.example.test.service.PostServiceInterface;
 import com.example.test.service.UserServiceInterface;
 import lombok.AllArgsConstructor;
 import lombok.NonNull;
@@ -17,31 +15,32 @@ import reactor.core.publisher.Mono;
 @AllArgsConstructor
 public class RsocketController {
     private UserServiceInterface userService;
+    private PostServiceInterface postService;
 
     @MessageMapping("/registration")
-    Mono<Users> registrationUser(NewUser user) {
+    Mono<User> registrationUser(Mono<NewUser> user) {
         return userService.saveUser(user);
     }
 
     @MessageMapping("/login")
-    Mono<Users> loginUser(NewUser user) {
+    Mono<User> loginUser(Mono<LogUser> user) {
         return userService.loginUser(user);
     }
 
     @MessageMapping("/users/{user-id}/posts")
-    Mono<Posts> creatPost(@DestinationVariable("user-id") @NonNull String userId, NewPost post) {
-        return userService.creatPost(userId, post);
+    Mono<Post> creatPost(@DestinationVariable("user-id") @NonNull String userId, Mono<NewPost> post) {
+        return postService.createPost(userId, post);
     }
 
     @MessageMapping("/users/{user-id}/posts/{posts-id}")
-    Mono<Posts> changeUserPostById(@DestinationVariable("user-id") @NonNull String userId,
-                                   @DestinationVariable("posts-id") @NonNull String postId,
-                                   NewPost post) {
-        return userService.changeUserPostById(userId, postId, post);
+    Mono<Post> changeUserPostById(@DestinationVariable("user-id") @NonNull String userId,
+                                  @DestinationVariable("posts-id") @NonNull String postId,
+                                  Mono<NewPost> post) {
+        return postService.changeUserPostById(userId, postId, post);
     }
 
     @MessageMapping("/posts")
-    Flux<Posts> getAllPosts() {
-        return userService.getPosts();
+    Flux<Post> getAllPosts() {
+        return postService.getPosts();
     }
 }
