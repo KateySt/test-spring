@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
 import java.util.NoSuchElementException;
+import java.util.function.Predicate;
 
 @AllArgsConstructor
 @Service
@@ -21,24 +22,20 @@ public class UserServiceImpl implements UserServiceInterface {
     @Override
     public Mono<User> saveUser(Mono<NewUser> user) {
         return user.flatMap(newUser -> userRepository.existsByEmail(newUser.getEmail())
-                .flatMap(exists -> {
-                    if (exists) {
-                        return Mono.error(new NoSuchElementException());
-                    }
-                    return userRepository.insert(userMapper.toUsers(newUser))
-                            .map(userMapper::toUser);
-                }));
+                .filter(((Predicate<Boolean>) Boolean::booleanValue).negate())
+                .switchIfEmpty(Mono.error(new NoSuchElementException()))
+                .then(userRepository.save(userMapper.toUsers(newUser)))
+                .map(userMapper::toUser)
+        );
     }
 
     @Override
     public Mono<User> loginUser(Mono<LogUser> user) {
         return user.flatMap(logUser -> userRepository.existsByEmail(logUser.getEmail())
-                .flatMap(exists -> {
-                    if (!exists) {
-                        return Mono.error(new NoSuchElementException());
-                    }
-                    return userRepository.findByEmail(logUser.getEmail())
-                            .map(userMapper::toUser);
-                }));
+                .filter(Boolean::booleanValue)
+                .switchIfEmpty(Mono.error(new NoSuchElementException()))
+                .then(userRepository.findByEmail(logUser.getEmail()))
+                .map(userMapper::toUser)
+        );
     }
 }

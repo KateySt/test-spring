@@ -1,6 +1,7 @@
 package com.example.test.service.impl;
 
 import com.example.test.mapper.PostMapper;
+import com.example.test.model.dto.ChangedPost;
 import com.example.test.model.dto.NewPost;
 import com.example.test.model.dto.Post;
 import com.example.test.model.entity.Posts;
@@ -14,6 +15,7 @@ import reactor.core.publisher.Mono;
 
 import java.time.Instant;
 import java.util.NoSuchElementException;
+import java.util.function.Predicate;
 
 @AllArgsConstructor
 @Service
@@ -24,50 +26,41 @@ public class PostServiceImpl implements PostServiceInterface {
     private PostMapper postMapper;
 
     @Override
-    public Flux<Post> getPosts() {//TODO sort by query parameter
-        Sort sort = Sort.by(DATA_SORT).descending();
-        return postRepository.findAll(sort)
+    public Flux<Post> getPosts() {
+        return postRepository.findAll(Sort.by(DATA_SORT).descending())
                 .map(postMapper::toPost);
     }
 
     @Override
-    public Mono<Post> changeUserPostById(String userId, String postId, Mono<NewPost> post) {
-        return postRepository.existsByUserIdAndPostId(userId, postId)
-                .flatMap(exists -> {
-                    if (!exists) {
-                        return Mono.error(new NoSuchElementException());
-                    }
-                    return postRepository.findByPostId(postId)
-                            .flatMap(oldPost -> {
-                                if (!userId.equals(oldPost.getUserId())) {
-                                    return Mono.error(new NoSuchElementException());
-                                }
-                                return post.map(newPost -> {
-                                    if (newPost.getTitle() != null) {
-                                        oldPost.setTitle(newPost.getTitle());
+    public Mono<Post> changeUserPostById(Mono<ChangedPost> post) {
+        return post.flatMap(changedPost ->
+                postRepository.existsByUserIdAndPostId(changedPost.getAuthorId(), changedPost.getPostId())
+                        .filter(Boolean::booleanValue)
+                        .switchIfEmpty(Mono.error(new NoSuchElementException()))
+                        .then(postRepository.findByPostId(changedPost.getPostId())
+                                .filter(oldPost -> changedPost.getAuthorId().equals(oldPost.getUserId()))
+                                .flatMap(oldPost -> {
+                                    if (changedPost.getTitle() != null) {
+                                        oldPost.setTitle(changedPost.getTitle());
                                     }
-                                    if (newPost.getBody() != null) {
-                                        oldPost.setBody(newPost.getBody());
+                                    if (changedPost.getBody() != null) {
+                                        oldPost.setBody(changedPost.getBody());
                                     }
-                                    return oldPost;
-                                });
-                            })
-                            .flatMap(postRepository::save)
-                            .map(postMapper::toPost);
-                });
+                                    return postRepository.save(oldPost);
+                                })
+                                .map(postMapper::toPost))
+        );
     }
 
     @Override
-    public Mono<Post> createPost(String userId, Mono<NewPost> newPost) {
-        return newPost.flatMap(post -> {
-            Posts postEntity = Posts.builder()
-                    .userId(userId)
-                    .dateCreated(Instant.now())
-                    .title(post.getTitle())
-                    .body(post.getBody())
-                    .build();
-            return postRepository.save(postEntity)
-                    .map(postMapper::toPost);
-        });
+    public Mono<Post> createPost(Mono<NewPost> newPost) {
+        return newPost.map(post -> Posts.builder()
+                        .userId(post.getAuthorId())
+                        .dateCreated(Instant.now())
+                        .title(post.getTitle())
+                        .body(post.getBody())
+                        .build())
+                .flatMap(postRepository::save)
+                .map(postMapper::toPost);
     }
 }

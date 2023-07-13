@@ -17,29 +17,27 @@ public class RsocketController {
     private UserServiceInterface userService;
     private PostServiceInterface postService;
 
-    @MessageMapping("/registration")
+    @MessageMapping("registration")
     Mono<User> registrationUser(Mono<NewUser> user) {
         return userService.saveUser(user);
     }
 
-    @MessageMapping("/login")
+    @MessageMapping("login")
     Mono<User> loginUser(Mono<LogUser> user) {
         return userService.loginUser(user);
     }
 
-    @MessageMapping("/users/{user-id}/posts")
-    Mono<Post> creatPost(@DestinationVariable("user-id") @NonNull String userId, Mono<NewPost> post) {
-        return postService.createPost(userId, post);
+    @MessageMapping("createPost")
+    Mono<Post> creatPost(Mono<NewPost> post) {
+        return postService.createPost(post);
     }
 
-    @MessageMapping("/users/{user-id}/posts/{posts-id}")
-    Mono<Post> changeUserPostById(@DestinationVariable("user-id") @NonNull String userId,
-                                  @DestinationVariable("posts-id") @NonNull String postId,
-                                  Mono<NewPost> post) {
-        return postService.changeUserPostById(userId, postId, post);
+    @MessageMapping("changePost")
+    Mono<Post> changeUserPostById(Mono<ChangedPost> post) {
+        return postService.changeUserPostById(post);
     }
 
-    @MessageMapping("/posts")
+    @MessageMapping("posts")
     Flux<Post> getAllPosts() {
         return postService.getPosts();
     }

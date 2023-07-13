@@ -7,7 +7,8 @@ import lombok.Data;
 @AllArgsConstructor
 @Data
 @Builder
-public class NewPost {
+public class ChangedPost {
+    private String postId;
     private String authorId;
     private String title;
     private String body;
